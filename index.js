@@ -1,12 +1,14 @@
 const express = require('express')
 const BodyParser = require('body-parser')
 const cors = require('cors')
+const path = require('path')
 const app = express()
 const PORT = process.env.PORT || 3000;
 
 app.use(BodyParser.json())
 app.use(BodyParser.urlencoded({ extended: true }))
 app.use(cors())
+app.use(express.static(path.join(__dirname, 'public')))
 
 
 
@@ -19,7 +21,7 @@ let fruits = ['Banana', 'Apple', 'Melon', 'Mangosteen', 'Peach', 'Raspberry', 'B
 
 
 
-app.get('/', async (req, res) => {
+app.get('/api', async (req, res) => {
   res.status(200).send({ message: 'hi!' })
 });
 

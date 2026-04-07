@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#4CAF50" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Fruit List" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <title>Fruit List</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f0f4f0;
+      color: #222;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #4CAF50;
+      color: white;
+      padding: 20px 16px 16px;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    header h1 { font-size: 1.6rem; font-weight: 700; }
+    header p { font-size: 0.85rem; opacity: 0.85; margin-top: 4px; }
+
+    main { max-width: 480px; margin: 0 auto; padding: 16px; }
+
+    .add-form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .add-form input {
+      flex: 1;
+      padding: 12px 14px;
+      border: 1.5px solid #ccc;
+      border-radius: 10px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .add-form input:focus { border-color: #4CAF50; }
+
+    .add-form button {
+      padding: 12px 18px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .add-form button:active { background: #388E3C; }
+
+    #status {
+      font-size: 0.85rem;
+      color: #555;
+      margin-bottom: 12px;
+      min-height: 18px;
+      text-align: center;
+    }
+
+    .fruit-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .fruit-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: white;
+      padding: 14px 16px;
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .fruit-name { font-size: 1rem; font-weight: 500; }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      color: #e53935;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+
+    .delete-btn:active { background: #fce4e4; }
+
+    .empty {
+      text-align: center;
+      color: #888;
+      padding: 40px 0;
+      font-size: 1rem;
+    }
+
+    #offline-banner {
+      display: none;
+      background: #ff9800;
+      color: white;
+      text-align: center;
+      padding: 8px;
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="offline-banner">You are offline — showing cached data</div>
+  <header>
+    <h1>🍎 Fruit List</h1>
+    <p>Add and manage your fruits</p>
+  </header>
+  <main>
+    <form class="add-form" id="add-form">
+      <input type="text" id="fruit-input" placeholder="Enter a fruit name" autocomplete="off" />
+      <button type="submit">Add</button>
+    </form>
+    <div id="status"></div>
+    <ul class="fruit-list" id="fruit-list"></ul>
+  </main>
+
+  <script>
+    const list = document.getElementById('fruit-list');
+    const status = document.getElementById('status');
+    const form = document.getElementById('add-form');
+    const input = document.getElementById('fruit-input');
+
+    function setStatus(msg, color = '#555') {
+      status.textContent = msg;
+      status.style.color = color;
+    }
+
+    async function loadFruits() {
+      try {
+        const res = await fetch('/fruits');
+        const fruits = await res.json();
+        renderList(fruits);
+        setStatus(`${fruits.length} fruit${fruits.length !== 1 ? 's' : ''} loaded`);
+      } catch {
+        setStatus('Could not load fruits', '#e53935');
+      }
+    }
+
+    function renderList(fruits) {
+      if (fruits.length === 0) {
+        list.innerHTML = '<div class="empty">No fruits yet — add one above!</div>';
+        return;
+      }
+      list.innerHTML = fruits.map(f => `
+        <li class="fruit-item">
+          <span class="fruit-name">${escapeHtml(f)}</span>
+          <button class="delete-btn" data-fruit="${escapeHtml(f)}" title="Remove">✕</button>
+        </li>
+      `).join('');
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fruit = input.value.trim();
+      if (!fruit) return;
+      try {
+        const res = await fetch('/fruits', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fruit })
+        });
+        if (res.ok || res.status === 200) {
+          input.value = '';
+          setStatus(`"${fruit}" added!`, '#4CAF50');
+          loadFruits();
+        } else {
+          setStatus(`"${fruit}" already exists`, '#ff9800');
+        }
+      } catch {
+        setStatus('Failed to add fruit', '#e53935');
+      }
+    });
+
+    list.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.delete-btn');
+      if (!btn) return;
+      const fruit = btn.dataset.fruit;
+      try {
+        await fetch('/fruits', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fruit })
+        });
+        setStatus(`"${fruit}" removed`, '#888');
+        loadFruits();
+      } catch {
+        setStatus('Failed to delete', '#e53935');
+      }
+    });
+
+    window.addEventListener('online',  () => { document.getElementById('offline-banner').style.display = 'none'; loadFruits(); });
+    window.addEventListener('offline', () => { document.getElementById('offline-banner').style.display = 'block'; });
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
+    }
+
+    loadFruits();
+  </script>
+</body>
+</html>

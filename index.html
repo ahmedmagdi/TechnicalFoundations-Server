@@ -28,6 +28,7 @@
       top: 0; left: 0;
     }
 
+    /* ── HUD ── */
     #hud {
       position: fixed;
       top: 0; left: 0; right: 0;
@@ -64,6 +65,27 @@
       text-shadow: 0 0 12px #ff4444;
     }
 
+    #muteBtn {
+      position: fixed;
+      bottom: max(16px, env(safe-area-inset-bottom));
+      right: 16px;
+      z-index: 15;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 50%;
+      width: 40px; height: 40px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.15s;
+    }
+    #muteBtn.visible { display: flex; }
+    #muteBtn:active  { background: rgba(255,255,255,0.2); }
+
+    /* ── Overlay screens ── */
     .screen {
       position: fixed;
       inset: 0;
@@ -86,6 +108,14 @@
       text-shadow: 0 0 24px #00e5ff, 0 0 48px #00e5ff44;
       letter-spacing: 6px;
       text-align: center;
+    }
+
+    .screen-sub {
+      color: #88aacc;
+      font-size: 0.95rem;
+      text-align: center;
+      line-height: 1.7;
+      max-width: 300px;
     }
 
     .legend {
@@ -135,11 +165,18 @@
       box-shadow: 0 0 30px rgba(0,229,255,0.6);
     }
 
+    /* ── Game Over ── */
     #resultText {
       font-size: 2.2rem;
       font-weight: bold;
       letter-spacing: 4px;
       text-shadow: 0 0 20px currentColor;
+    }
+
+    #resultDetails {
+      color: #aac;
+      font-size: 1rem;
+      letter-spacing: 1px;
     }
 
     #resultBreakdown {
@@ -165,12 +202,17 @@
 
   <canvas id="gameCanvas"></canvas>
 
+  <!-- HUD -->
   <div id="hud">
     <div class="score-box player">YOU&nbsp;<span id="playerScore">0</span></div>
     <div id="timerDisplay">60</div>
     <div class="score-box enemy"><span id="enemyScore">0</span>&nbsp;CPU</div>
   </div>
 
+  <!-- Mute button (visible during gameplay) -->
+  <button id="muteBtn" class="visible">🔊</button>
+
+  <!-- Start Screen -->
   <div id="startScreen" class="screen">
     <div class="screen-title">AIR<br>DUEL</div>
     <div class="legend">
@@ -184,12 +226,13 @@
       </div>
       <div class="legend-item">
         <div class="legend-dot" style="background:#ffff00;box-shadow:0 0 6px #ffff00"></div>
-        Drag to dodge &amp; aim &#8212; 60s
+        Drag (mobile) or ← → keys (desktop) — 60s
       </div>
     </div>
     <button id="startBtn" class="btn">START</button>
   </div>
 
+  <!-- Game Over Screen -->
   <div id="gameOverScreen" class="screen hidden">
     <div id="resultText"></div>
     <div id="resultBreakdown">

@@ -159,9 +159,9 @@ class InputHandler {
 
 // ── Aircraft ──────────────────────────────────────────────────────────────────
 class Aircraft {
-  constructor(x, y, isPlayer) {
+  constructor(x, y, isPlayer, w = CFG.AIRCRAFT_W, h = CFG.AIRCRAFT_H) {
     this.x = x; this.y = y; this.isPlayer = isPlayer;
-    this.w = CFG.AIRCRAFT_W; this.h = CFG.AIRCRAFT_H;
+    this.w = w; this.h = h;
     this.hitFlash = 0;
   }
 
@@ -408,9 +408,13 @@ class Game {
   _startGame() {
     this._audio.init();
 
-    // Player placed higher up — better visibility on mobile (thumb doesn't cover it)
-    this._player = new Aircraft(this._W * 0.5, this._H - 140, true);
-    this._enemy  = new Aircraft(this._W * 0.5, 100, false);
+    // Scale aircraft up on desktop screens
+    const aScale = this._W >= 768 ? 1.8 : 1.0;
+    const aW = CFG.AIRCRAFT_W * aScale;
+    const aH = CFG.AIRCRAFT_H * aScale;
+
+    this._player = new Aircraft(this._W * 0.5, this._H - 140, true,  aW, aH);
+    this._enemy  = new Aircraft(this._W * 0.5, 100,           false, aW, aH);
     this._missiles  = [];
     this._particles = [];
     this._ai        = new EnemyAI();
